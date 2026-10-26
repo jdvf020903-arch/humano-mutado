@@ -1,0 +1,31 @@
+name: Build APK
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build APK
+        run: |
+          export HOME=/root
+          SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/lib/android-sdk}}
+          [ -f /root/debug.keystore ] || keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore /root/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
+          mkdir -p /root/.config/godot
+          for n in 4 4.3; do
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/debug_keystore = "/root/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\n' "$SDK" > /root/.config/godot/editor_settings-$n.tres
+          done
+          mkdir -p build
+          godot --headless --verbose --import || true
+          godot --headless --verbose --export-debug "Android" build/humano-mutado.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: humano-mutado-apk
+          path: build/humano-mutado.apk
