@@ -16,10 +16,11 @@ jobs:
         run: |
           export HOME=/root
           SDK=${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/lib/android-sdk}}
+          JDK=${JAVA_HOME:-$(dirname $(dirname $(readlink -f $(which javac))))}
           [ -f /root/debug.keystore ] || keytool -keyalg RSA -genkeypair -alias androiddebugkey -keypass android -keystore /root/debug.keystore -storepass android -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
           mkdir -p /root/.config/godot
           for n in 4 4.3; do
-            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/debug_keystore = "/root/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\n' "$SDK" > /root/.config/godot/editor_settings-$n.tres
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\nexport/android/android_sdk_path = "%s"\nexport/android/java_sdk_path = "%s"\nexport/android/debug_keystore = "/root/debug.keystore"\nexport/android/debug_keystore_user = "androiddebugkey"\nexport/android/debug_keystore_pass = "android"\n' "$SDK" "$JDK" > /root/.config/godot/editor_settings-$n.tres
           done
           mkdir -p build
           godot --headless --verbose --import || true
